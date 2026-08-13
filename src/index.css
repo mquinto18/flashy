@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 1.5rem;
+  --background: oklch(0.16 0.02 265);
+  --foreground: oklch(0.97 0.005 250);
+  --card: oklch(0.24 0.025 265);
+  --card-foreground: oklch(0.97 0.005 250);
+  --popover: oklch(0.22 0.025 265);
+  --popover-foreground: oklch(0.97 0.005 250);
+  --primary: oklch(0.82 0.13 195);
+  --primary-foreground: oklch(0.18 0.03 235);
+  --secondary: oklch(0.3 0.03 265);
+  --secondary-foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.28 0.02 265);
+  --muted-foreground: oklch(0.74 0.02 260);
+  --accent: oklch(0.72 0.15 300);
+  --accent-foreground: oklch(0.97 0.005 250);
+  --destructive: oklch(0.63 0.21 25);
+  --destructive-foreground: oklch(0.98 0.003 248);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.82 0.13 195 / 60%);
+  --glass-tint: oklch(1 0 0 / 8%);
+  --glass-tint-strong: oklch(1 0 0 / 14%);
+  --glass-edge: oklch(1 0 0 / 22%);
+  --glass-sheen: linear-gradient(
+    to bottom,
+    oklch(1 0 0 / 26%) 0%,
+    oklch(1 0 0 / 6%) 34%,
+    oklch(1 0 0 / 0%) 62%,
+    oklch(1 0 0 / 8%) 100%
+  );
+  --shadow-glass:
+    0 1px 0 0 oklch(1 0 0 / 22%) inset, 0 -1px 0 0 oklch(0 0 0 / 25%) inset,
+    0 24px 60px -12px oklch(0 0 0 / 65%);
+  --gradient-brand: linear-gradient(135deg, oklch(0.85 0.13 195), oklch(0.72 0.16 300));
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility glass {
+  background: var(--glass-tint);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-glass);
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--glass-sheen);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+@utility glass-strong {
+  background: var(--glass-tint-strong);
+  backdrop-filter: blur(44px) saturate(200%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility text-brand-gradient {
+  background: var(--gradient-brand);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-brand-gradient {
+  background: var(--gradient-brand);
+}
+
+@keyframes island-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.03);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.85 0.13 195 / 45%);
+  }
+  100% {
+    box-shadow: 0 0 0 22px oklch(0.85 0.13 195 / 0%);
+  }
+}
+
+@utility animate-island-drop {
+  animation: island-drop 0.45s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+@utility animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+@utility animate-pulse-ring {
+  animation: pulse-ring 1.6s ease-out infinite;
+}
