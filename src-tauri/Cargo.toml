@@ -21,9 +21,30 @@ tauri-build = { version = "2.6.3", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.11.3", features = [] }
+# macos-private-api is required for a transparent window on macOS — without it the
+# `transparent()` builder method does not even exist. The auto-close overlay needs it so
+# only its rounded card is visible rather than an opaque rectangle.
+# Trade-off: Apple rejects apps using private APIs from the Mac App Store. Direct
+# distribution (the current `bundle.targets: "all"` setup) is unaffected.
+tauri = { version = "2.11.3", features = ["macos-private-api"] }
 tauri-plugin-log = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+# Backstop for the one case the overlay cannot cover: another app in native macOS
+# fullscreen. Notifications are the OS-sanctioned way to surface there.
+tauri-plugin-notification = "2"
 sysinfo = "0.32"
+
+# Used only to let the overlay float over native-fullscreen apps. tao sets
+# CanJoinAllSpaces but never FullScreenAuxiliary, so without this the panel is invisible
+# whenever the user is fullscreen in a browser. Both crates are already in the lockfile
+# as transitive deps of tao/wry, so this pins no new versions.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = [
+  "NSWindow",
+  "NSResponder",
+  "NSApplication",
+  "NSRunningApplication",
+] }

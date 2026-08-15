@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { ChevronDown, FolderOpen, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ChevronDown, Clock, FolderOpen, Plus, Sparkles, Trash2 } from "lucide-react";
 import logo from "../assets/flashy-logo.png";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { useToastStore } from "../store/useToastStore";
+import { useScheduleStore } from "../store/useScheduleStore";
 import { detectItemFromInput, detectTypeFromPath, fileNameFromPath } from "../lib/detectItem";
+import { formatTimeOfDay } from "../lib/schedule";
 import { ItemList } from "./ItemList";
 import { AddItemModal } from "./AddItemModal";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { SetCloseTimeModal } from "./SetCloseTimeModal";
 import { LaunchButton } from "./LaunchButton";
 
 export function FlashyIsland() {
@@ -26,6 +29,8 @@ export function FlashyIsland() {
   const runningApps = useWorkspaceStore((s) => s.runningApps);
   const refreshRunningApps = useWorkspaceStore((s) => s.refreshRunningApps);
   const showToast = useToastStore((s) => s.show);
+  const armedCloses = useScheduleStore((s) => s.armedCloses);
+  const scheduleNow = useScheduleStore((s) => s.now);
 
   const active = useMemo(
     () => workspaces.find((w) => w.id === selectedWorkspaceId) ?? workspaces[0] ?? null,
@@ -38,6 +43,7 @@ export function FlashyIsland() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isCloseTimeOpen, setIsCloseTimeOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLaunchingAll, setIsLaunchingAll] = useState(false);
@@ -126,9 +132,27 @@ export function FlashyIsland() {
     if (!active) return;
     setIsLaunchingAll(true);
     await launchWorkspace(active.id);
-    showToast(`Launched ${active.items.length} ${active.items.length === 1 ? "item" : "items"}`);
+    const n = active.items.length;
+    const base = `Launched ${n} ${n === 1 ? "item" : "items"}`;
+    showToast(active.autoCloseAt ? `${base} · closing at ${formatTimeOfDay(active.autoCloseAt)}` : base);
     setIsLaunchingAll(false);
   }
+
+  const armed = activeId ? armedCloses[activeId] : undefined;
+
+  const subtitle = useMemo(() => {
+    if (!active) return "No workspaces yet";
+    const count = `${active.items.length} ${active.items.length === 1 ? "item" : "items"}`;
+    if (armed?.phase === "warning") {
+      const seconds = Math.max(0, Math.ceil((armed.fireAt - scheduleNow) / 1000));
+      return `${active.name} · closing in ${seconds}s`;
+    }
+    if (armed) return `${active.name} · ${count} · closing at ${formatTimeOfDay(active.autoCloseAt)}`;
+    if (active.autoCloseAt) {
+      return `${active.name} · ${count} · auto-close ${formatTimeOfDay(active.autoCloseAt)}`;
+    }
+    return `${active.name} · ${count} ready`;
+  }, [active, armed, scheduleNow]);
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -146,8 +170,12 @@ export function FlashyIsland() {
         />
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-semibold tracking-tight text-foreground">Flashy</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {active ? `${active.name} · ${active.items.length} items ready` : "No workspaces yet"}
+          <p
+            className={`truncate text-xs ${
+              armed?.phase === "warning" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            {subtitle}
           </p>
         </div>
         {isLaunchingAll ? (
@@ -202,6 +230,16 @@ export function FlashyIsland() {
                         />
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{w.name}</span>
                         <span className="text-xs text-muted-foreground">{w.items.length}</span>
+                        {w.autoCloseAt && (
+                          // Tinted when a close is actually scheduled, muted when the
+                          // time is merely configured — the distinction between the two
+                          // is the most confusing part of this feature.
+                          <Clock
+                            className={`size-3 shrink-0 ${
+                              armedCloses[w.id] ? "text-primary" : "text-muted-foreground"
+                            }`}
+                          />
+                        )}
                       </button>
                     </li>
                   );
@@ -262,6 +300,25 @@ export function FlashyIsland() {
                 )}
                 <div className="flex shrink-0 items-center gap-2">
                   <p className="hidden text-xs text-muted-foreground sm:block">Drag items in or paste a link</p>
+                  {active && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCloseTimeOpen(true)}
+                      aria-label={
+                        active.autoCloseAt
+                          ? `Auto-close at ${formatTimeOfDay(active.autoCloseAt)}`
+                          : "Set auto-close time"
+                      }
+                      className={
+                        active.autoCloseAt
+                          ? "flex items-center gap-1.5 rounded-full border border-primary/40 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+                          : "rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
+                      }
+                    >
+                      <Clock className="size-4" />
+                      {active.autoCloseAt ? formatTimeOfDay(active.autoCloseAt) : null}
+                    </button>
+                  )}
                   {active && (
                     <button
                       type="button"
@@ -349,6 +406,11 @@ export function FlashyIsland() {
       {active && (
         <>
           <AddItemModal isOpen={isAddOpen} workspaceId={active.id} onClose={() => setIsAddOpen(false)} />
+          <SetCloseTimeModal
+            isOpen={isCloseTimeOpen}
+            workspace={active}
+            onClose={() => setIsCloseTimeOpen(false)}
+          />
           <ConfirmDialog
             isOpen={isConfirmDeleteOpen}
             title="Delete workspace"

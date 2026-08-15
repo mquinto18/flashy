@@ -34,6 +34,15 @@ export interface Workspace {
   name: string;
   icon?: string;
   accent: number;
+  /**
+   * Local wall-clock time of day, 24h zero-padded "HH:MM" (e.g. "15:00"). Absent means
+   * no auto-close.
+   *
+   * Stored as a time of day rather than a timestamp because the schedule recurs on
+   * every launch — a stored date would be permanently in the past after midnight. It
+   * also keeps "3 PM" at 3 PM across DST, and matches what `<input type="time">` emits.
+   */
+  autoCloseAt?: string;
   createdAt: string;
   updatedAt: string;
   items: WorkspaceItem[];

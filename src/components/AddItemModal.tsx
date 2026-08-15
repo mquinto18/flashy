@@ -82,7 +82,11 @@ export function AddItemModal({ isOpen, workspaceId, onClose }: AddItemModalProps
   async function handleBrowse() {
     const selection = await open(
       type === "application"
-        ? { multiple: false, directory: false, filters: [{ name: "Application", extensions: ["exe"] }] }
+        ? // Both extensions are listed so no platform check is needed: macOS bundles are
+          // .app, Windows binaries are .exe, and each filter is inert on the other OS.
+          // On macOS the "app" filter makes NSOpenPanel treat bundles as selectable
+          // packages rather than folders to navigate into.
+          { multiple: false, directory: false, filters: [{ name: "Application", extensions: ["app", "exe"] }] }
         : { multiple: false, directory: type === "folder" },
     );
     if (typeof selection !== "string") return;
@@ -127,7 +131,7 @@ export function AddItemModal({ isOpen, workspaceId, onClose }: AddItemModalProps
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15 }}
-            className={`glass-strong relative w-full max-w-sm rounded-3xl p-6 transition-colors ${
+            className={`glass-modal relative w-full max-w-sm rounded-3xl p-6 transition-colors ${
               isDragOver ? "border-primary/70" : ""
             }`}
           >

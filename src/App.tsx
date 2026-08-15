@@ -6,6 +6,10 @@ import { LoadingScreen } from "./pages/LoadingScreen";
 import { StartScreen } from "./pages/StartScreen";
 import { AppScreen } from "./pages/AppScreen";
 import { Toast } from "./components/Toast";
+// Importing this also registers useScheduleStore's module-level subscriptions and
+// event listeners, which is what arms auto-close. Don't "clean up" the import.
+import { CloseCountdown } from "./components/CloseCountdown";
+import { overlayAvailable } from "./lib/launchSession";
 import bg from "./assets/desk-bg.jpg";
 
 function App() {
@@ -13,10 +17,17 @@ function App() {
   const loadWorkspaces = useWorkspaceStore((s) => s.loadWorkspaces);
   const toastMessage = useToastStore((s) => s.message);
   const [screen, setScreen] = useState<"start" | "app">("start");
+  // Assume the floating overlay exists so the in-app countdown never flashes during the
+  // check. It only renders as a fallback if the overlay window couldn't be created.
+  const [hasOverlay, setHasOverlay] = useState(true);
 
   useEffect(() => {
     void loadWorkspaces();
   }, [loadWorkspaces]);
+
+  useEffect(() => {
+    void overlayAvailable().then((available) => setHasOverlay(available ?? false));
+  }, []);
 
   if (!isLoaded) return <LoadingScreen />;
 
@@ -62,6 +73,9 @@ function App() {
       </div>
 
       <Toast message={toastMessage} />
+      {/* The floating overlay window normally owns the countdown, so this would be a
+          duplicate. It renders only when that window couldn't be created. */}
+      {!hasOverlay && <CloseCountdown />}
     </main>
   );
 }

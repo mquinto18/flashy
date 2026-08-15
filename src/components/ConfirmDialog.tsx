@@ -20,7 +20,7 @@ export function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel }: C
           onClick={onCancel}
         >
           <motion.div
-            className="glass-strong w-full max-w-sm rounded-3xl p-6"
+            className="glass-modal w-full max-w-sm rounded-3xl p-6"
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}

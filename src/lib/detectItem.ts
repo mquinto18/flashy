@@ -7,8 +7,10 @@ export function fileNameFromPath(path: string): string {
 // Dropped/pasted paths aren't statable without broadening fs permissions past the
 // app-data scope, so type is inferred from the path shape rather than an actual stat().
 export function detectTypeFromPath(path: string): Exclude<WorkspaceItemType, "website"> {
-  const base = fileNameFromPath(path);
-  if (/\.exe$/i.test(base)) return "application";
+  const base = fileNameFromPath(path.replace(/[/\\]+$/, ""));
+  // .app must be checked before the generic "has a dot" rule: macOS bundles are
+  // directories whose names contain a dot, so they'd otherwise be typed as files.
+  if (/\.app$/i.test(base) || /\.exe$/i.test(base)) return "application";
   return base.includes(".") ? "file" : "folder";
 }
 
