@@ -8,6 +8,7 @@ import { useToastStore } from "../store/useToastStore";
 import { useScheduleStore } from "../store/useScheduleStore";
 import { detectItemFromInput, detectTypeFromPath, fileNameFromPath } from "../lib/detectItem";
 import { formatTimeOfDay } from "../lib/schedule";
+import { AUTO_CLOSE_ENABLED } from "../lib/features";
 import { ItemList } from "./ItemList";
 import { AddItemModal } from "./AddItemModal";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -134,11 +135,15 @@ export function FlashyIsland() {
     await launchWorkspace(active.id);
     const n = active.items.length;
     const base = `Launched ${n} ${n === 1 ? "item" : "items"}`;
-    showToast(active.autoCloseAt ? `${base} · closing at ${formatTimeOfDay(active.autoCloseAt)}` : base);
+    showToast(
+      AUTO_CLOSE_ENABLED && active.autoCloseAt
+        ? `${base} · closing at ${formatTimeOfDay(active.autoCloseAt)}`
+        : base,
+    );
     setIsLaunchingAll(false);
   }
 
-  const armed = activeId ? armedCloses[activeId] : undefined;
+  const armed = AUTO_CLOSE_ENABLED && activeId ? armedCloses[activeId] : undefined;
 
   const subtitle = useMemo(() => {
     if (!active) return "No workspaces yet";
@@ -148,7 +153,7 @@ export function FlashyIsland() {
       return `${active.name} · closing in ${seconds}s`;
     }
     if (armed) return `${active.name} · ${count} · closing at ${formatTimeOfDay(active.autoCloseAt)}`;
-    if (active.autoCloseAt) {
+    if (AUTO_CLOSE_ENABLED && active.autoCloseAt) {
       return `${active.name} · ${count} · auto-close ${formatTimeOfDay(active.autoCloseAt)}`;
     }
     return `${active.name} · ${count} ready`;
@@ -230,7 +235,7 @@ export function FlashyIsland() {
                         />
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{w.name}</span>
                         <span className="text-xs text-muted-foreground">{w.items.length}</span>
-                        {w.autoCloseAt && (
+                        {AUTO_CLOSE_ENABLED && w.autoCloseAt && (
                           // Tinted when a close is actually scheduled, muted when the
                           // time is merely configured — the distinction between the two
                           // is the most confusing part of this feature.
@@ -300,7 +305,7 @@ export function FlashyIsland() {
                 )}
                 <div className="flex shrink-0 items-center gap-2">
                   <p className="hidden text-xs text-muted-foreground sm:block">Drag items in or paste a link</p>
-                  {active && (
+                  {AUTO_CLOSE_ENABLED && active && (
                     <button
                       type="button"
                       onClick={() => setIsCloseTimeOpen(true)}
@@ -406,11 +411,13 @@ export function FlashyIsland() {
       {active && (
         <>
           <AddItemModal isOpen={isAddOpen} workspaceId={active.id} onClose={() => setIsAddOpen(false)} />
-          <SetCloseTimeModal
-            isOpen={isCloseTimeOpen}
-            workspace={active}
-            onClose={() => setIsCloseTimeOpen(false)}
-          />
+          {AUTO_CLOSE_ENABLED && (
+            <SetCloseTimeModal
+              isOpen={isCloseTimeOpen}
+              workspace={active}
+              onClose={() => setIsCloseTimeOpen(false)}
+            />
+          )}
           <ConfirmDialog
             isOpen={isConfirmDeleteOpen}
             title="Delete workspace"

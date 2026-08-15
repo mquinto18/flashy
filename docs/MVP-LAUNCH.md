@@ -183,7 +183,15 @@ cheated. Put this on the landing page from day one:
 
 That single sentence buys goodwill *and* pre-frames the paywall as expected.
 
-### Ship auto-close as a free beta first
+### Current state: hidden
+
+Auto-close is behind `AUTO_CLOSE_ENABLED` (`src/lib/features.ts`, mirrored in
+`src-tauri/src/proc/overlay.rs`) and **off**. The MVP ships as a launcher only. The code
+is complete and committed — this is a flag, not a deletion.
+
+Turn it on once the verification in Part 1 is done, and ship it as a free beta first.
+
+### Then: free beta, before charging
 
 It solves a real problem: the feature is destructive and unproven, you need real users
 exercising it, and you can't honestly charge for it yet. Beta framing gets you testing,

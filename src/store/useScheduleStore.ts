@@ -11,6 +11,7 @@ import { listen } from "@tauri-apps/api/event";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 import { useToastStore } from "./useToastStore";
 import { nextOccurrence } from "../lib/schedule";
+import { AUTO_CLOSE_ENABLED } from "../lib/features";
 import { armAutoClose, closeLaunchSession, disarmAutoClose, type CloseReport } from "../lib/launchSession";
 
 /** How long before the close a countdown appears. Must match WARNING_LEAD_MS in Rust. */
@@ -52,6 +53,10 @@ export const useScheduleStore = create<ScheduleState>()(
     closingIds: [],
 
     arm: (workspaceId) => {
+      // The single gate that matters: with nothing armed, no timer runs, no warning
+      // fires and nothing is ever closed — regardless of what the UI does.
+      if (!AUTO_CLOSE_ENABLED) return;
+
       const workspace = useWorkspaceStore.getState().workspaces.find((w) => w.id === workspaceId);
       if (!workspace?.autoCloseAt) return;
       // Nothing was opened, so there is nothing to close.

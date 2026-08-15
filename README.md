@@ -128,6 +128,15 @@ ancestors, and every blocklisted system process are always spared.
 
 ## Auto-close
 
+> **Hidden in the current build.** The MVP ships as a launcher only. The feature is
+> complete and its safety guard is unit-tested, but it force-quits applications and has
+> not been verified end-to-end against real apps, so it stays off until it is.
+>
+> To enable: set `AUTO_CLOSE_ENABLED = true` in `src/lib/features.ts` **and**
+> `AUTO_CLOSE_ENABLED` in `src-tauri/src/proc/overlay.rs`. The frontend flag is the one
+> that matters — with nothing armed, no timer runs and nothing can be closed. The Rust
+> flag only avoids creating a webview that would never be shown.
+
 Set a time on a category with the clock button, then launch it. At that time, everything
 the launch opened is closed, after a 60-second warning with a Cancel button.
 

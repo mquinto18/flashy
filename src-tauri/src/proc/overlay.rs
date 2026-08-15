@@ -19,6 +19,13 @@ use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 pub const LABEL: &str = "close-overlay";
 
+/// Gates creating the warning window at all.
+///
+/// Must stay in sync with `AUTO_CLOSE_ENABLED` in `src/lib/features.ts`. That flag is
+/// what actually prevents anything being closed (nothing arms, so no timer runs); this
+/// one just avoids paying for a second webview process that would never be shown.
+const AUTO_CLOSE_ENABLED: bool = false;
+
 /// Logical width of the panel. Height is measured from content — see [`set_height`].
 const WIDTH: f64 = 420.0;
 /// Starting height; replaced as soon as the overlay reports its real content height.
@@ -32,6 +39,10 @@ const CORNER_RADIUS: f64 = 20.0;
 
 /// Build the overlay, hidden. Called once from `setup`.
 pub fn create(app: &tauri::AppHandle) {
+    if !AUTO_CLOSE_ENABLED {
+        log::info!("flashy: auto-close disabled; skipping close overlay");
+        return;
+    }
     if app.get_webview_window(LABEL).is_some() {
         return;
     }
